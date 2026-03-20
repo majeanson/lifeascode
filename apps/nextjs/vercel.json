@@ -1,0 +1,4 @@
+{
+  "buildCommand": "cd ../.. && bunx turbo run build --filter=@life-as-code/nextjs...",
+  "installCommand": "cd ../.. && bun install"
+}
