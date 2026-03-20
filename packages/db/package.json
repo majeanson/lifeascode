@@ -1,0 +1,39 @@
+{
+  "name": "@life-as-code/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": "./dist/index.mjs",
+    "./schema": "./dist/schema/index.mjs",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "db:generate": "bun run with-env drizzle-kit generate",
+    "db:migrate": "bun run with-env drizzle-kit migrate",
+    "db:push": "bun run with-env drizzle-kit push",
+    "db:studio": "bun run with-env drizzle-kit studio",
+    "test": "dotenv -e ../../.env -- vitest run",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../.env --",
+    "~dev": "tsdown --watch ./src"
+  },
+  "dependencies": {
+    "@life-as-code/lib": "workspace:*",
+    "@life-as-code/validators": "workspace:*",
+    "drizzle-orm": "^0.45.1",
+    "postgres": "^3.4.5",
+    "ulidx": "^2.4.1"
+  },
+  "devDependencies": {
+    "@life-as-code/tsconfig": "workspace:*",
+    "dotenv-cli": "catalog:dev",
+    "drizzle-kit": "^0.31.9",
+    "tsdown": "catalog:dev",
+    "typescript": "catalog:dev",
+    "vitest": "^4.1.0"
+  }
+}

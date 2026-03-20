@@ -1,0 +1,6 @@
+{
+  "buildCommand": "bunx turbo run build --filter=@life-as-code/nextjs...",
+  "outputDirectory": "apps/nextjs/.next",
+  "framework": "nextjs",
+  "installCommand": "bun install"
+}
