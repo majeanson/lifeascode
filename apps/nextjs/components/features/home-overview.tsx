@@ -17,6 +17,7 @@ import { FeatureStateBadge } from './feature-state-badge'
 import { ScoreBadge } from './score-badge'
 import { StageCompletionIndicator } from './stage-completion-indicator'
 import { CompletenessTable } from '@/app/(features)/dashboard/_components/CompletenessTable'
+import { DevFortune } from './dev-fortune'
 
 // ── Stat tile ─────────────────────────────────────────────────────────────────
 
@@ -193,6 +194,8 @@ export function HomeOverview() {
           </Link>
         }
       />
+
+      <DevFortune />
 
       {/* Stats — stream independently */}
       <Suspense fallback={<StatsSkeleton />}>
