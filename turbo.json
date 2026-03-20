@@ -43,6 +43,7 @@
   "globalEnv": [
     "NEXT_PUBLIC_API_URL",
     "DATABASE_URL",
+    "DATABASE_URL_POOLED",
     "AUTH_SECRET",
     "AUTH_DISCORD_ID",
     "AUTH_DISCORD_SECRET",
