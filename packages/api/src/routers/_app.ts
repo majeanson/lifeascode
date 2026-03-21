@@ -3,6 +3,7 @@ import type { inferRouterInputs, inferRouterOutputs } from '@trpc/server'
 import { createTRPCRouter, publicProcedure } from '@/trpc'
 import { eventsRouter } from './events'
 import { featuresRouter } from './features'
+import { githubRouter } from './github'
 import { searchRouter } from './search'
 
 const appRouter = createTRPCRouter({
@@ -10,6 +11,7 @@ const appRouter = createTRPCRouter({
     .meta({ message: 'Health check successful' })
     .query(() => ({ message: 'OK' })),
   features: featuresRouter,
+  github: githubRouter,
   search: searchRouter,
   events: eventsRouter,
 })

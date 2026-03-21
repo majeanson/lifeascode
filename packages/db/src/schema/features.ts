@@ -19,6 +19,10 @@ export const features = pgTable(
     targetPeriod: text('target_period'),
     /** Pre-computed completeness 0-100 based on filled lifecycle stages. Updated on every content write. */
     completeness_pct: integer('completeness_pct').notNull().default(0),
+    /** GitHub sync — null means DB-native, set means synced from a repo */
+    githubSourceId: text('github_source_id'),
+    githubPath: text('github_path'),
+    githubSha: text('github_sha'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
   },

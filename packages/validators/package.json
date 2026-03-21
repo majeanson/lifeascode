@@ -13,6 +13,7 @@
     "./event-types": "./dist/event-types.mjs",
     "./export": "./dist/export.mjs",
     "./feature": "./dist/feature.mjs",
+    "./github": "./dist/github.mjs",
     "./lifecycle": "./dist/lifecycle.mjs",
     "./schema-config": "./dist/schema-config.mjs",
     "./scoring": "./dist/scoring.mjs",
