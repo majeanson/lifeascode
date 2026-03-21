@@ -7,7 +7,7 @@ import Link from 'next/link'
 
 import { Button, SaveIndicator } from '@life-as-code/ui'
 import { LIFECYCLE_STAGES } from '@life-as-code/validators'
-import type { DecisionEntry, LifecycleStage } from '@life-as-code/validators'
+import type { DecisionEntry, FeatureContent, LifecycleStage } from '@life-as-code/validators'
 
 import { useTRPC } from '@/trpc/react'
 import { useWizardStore } from '@/stores/wizard-store'
@@ -15,6 +15,7 @@ import { STAGE_LABEL } from '@/lib/stage-labels'
 import { FeatureStateBadge } from '@/components/features/feature-state-badge'
 import { SpawnDialog } from '@/components/features/spawn-dialog'
 
+import { AiFillDialog } from './ai-fill-dialog'
 import { DecisionLogPanel } from './decision-log-panel'
 import { TagInput } from './tag-input'
 import { TitleInput } from './title-input'
@@ -52,6 +53,7 @@ export function WizardShell({ featureId, inline = false }: WizardShellProps) {
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [validationError, setValidationError] = useState<string | null>(null)
   const [showSpawnDialog, setShowSpawnDialog] = useState(false)
+  const [showAiDialog, setShowAiDialog] = useState(false)
 
   // Hydrate Zustand persist store client-side
   useEffect(() => {
@@ -74,6 +76,7 @@ export function WizardShell({ featureId, inline = false }: WizardShellProps) {
   const featureQuery = useQuery(trpc.features.getFeature.queryOptions({ id: featureId }))
   const activeSchemaQuery = useQuery(trpc.features.admin.getActiveSchema.queryOptions({}))
   const updateStageMutation = useMutation(trpc.features.updateStage.mutationOptions())
+  const updateFeatureJsonMutation = useMutation(trpc.features.updateFeatureJson.mutationOptions())
 
   const content = featureQuery.data?.content as Record<string, Record<string, unknown>> | undefined
   const decisions = (content?.[currentStage]?.decisions as DecisionEntry[]) ?? []
@@ -219,6 +222,38 @@ export function WizardShell({ featureId, inline = false }: WizardShellProps) {
     [handleStageChange],
   )
 
+  const handleApplyAiContent = useCallback(
+    (aiContent: FeatureContent) => {
+      const existing = (content as FeatureContent) ?? {}
+      const merged: FeatureContent = {
+        ...existing,
+        ...aiContent,
+        // Merge each stage shallowly so existing values aren't silently lost
+        ...(Object.fromEntries(
+          LIFECYCLE_STAGES.map((stage) => [
+            stage,
+            {
+              ...(existing[stage] as Record<string, unknown> | undefined ?? {}),
+              ...(aiContent[stage] as Record<string, unknown> | undefined ?? {}),
+            },
+          ]),
+        ) as Partial<FeatureContent>),
+      }
+      setSaveState('saving')
+      updateFeatureJsonMutation.mutate(
+        { id: featureId, jsonContent: JSON.stringify(merged) },
+        {
+          onSuccess: () => {
+            void featureQuery.refetch()
+            setSaveState('saved')
+          },
+          onError: () => setSaveState('error'),
+        },
+      )
+    },
+    [featureId, content, setSaveState, updateFeatureJsonMutation, featureQuery],
+  )
+
   const isLastSubStep = currentSubStep === stageFields.length - 1
   const isLastStage = currentIndex === LIFECYCLE_STAGES.length - 1
   const nextLabel = currentMode === 'focus' && !isLastSubStep ? 'Next question →' : isLastStage ? 'Done ✓' : 'Next →'
@@ -331,6 +366,14 @@ export function WizardShell({ featureId, inline = false }: WizardShellProps) {
           >
             ⚡ Expert
           </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => { setShowAiDialog(true) }}
+          >
+            ✨ Fill with AI
+          </Button>
           <Link
             href={`/features/${featureId}/json`}
             className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1"
@@ -421,6 +464,13 @@ export function WizardShell({ featureId, inline = false }: WizardShellProps) {
           saveState={saveState}
           prevLabel={prevLabel}
           nextLabel={nextLabel}
+        />
+      )}
+
+      {showAiDialog && (
+        <AiFillDialog
+          onClose={() => { setShowAiDialog(false) }}
+          onApply={handleApplyAiContent}
         />
       )}
     </div>
