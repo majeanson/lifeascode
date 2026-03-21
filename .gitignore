@@ -4,5 +4,4 @@ dist/
 .cache/
 .env
 .env.local
-bun.lock
 *.vsix
