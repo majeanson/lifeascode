@@ -5,6 +5,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import Link from 'next/link'
 
+import { Github } from 'lucide-react'
 import { buttonVariants } from '@life-as-code/ui'
 
 import { useTRPCClient } from '@/trpc/react'
@@ -15,6 +16,7 @@ import { FeatureCard } from './feature-card'
 import { FeatureCardSkeleton } from './feature-card-skeleton'
 
 type StatusFilter = 'all' | 'active' | 'draft' | 'frozen' | 'flagged'
+type SourceFilter = 'all' | 'db' | 'github'
 
 const STATUS_PILLS: { key: StatusFilter; label: string }[] = [
   { key: 'all', label: 'All' },
@@ -22,6 +24,12 @@ const STATUS_PILLS: { key: StatusFilter; label: string }[] = [
   { key: 'draft', label: 'Draft' },
   { key: 'frozen', label: 'Frozen' },
   { key: 'flagged', label: 'Flagged' },
+]
+
+const SOURCE_PILLS: { key: SourceFilter; label: string }[] = [
+  { key: 'all', label: 'All sources' },
+  { key: 'db', label: 'DB' },
+  { key: 'github', label: 'GitHub' },
 ]
 
 const PAGE_LIMIT = 25
@@ -33,13 +41,14 @@ export function FeatureList() {
 
   const [rawSearch, setRawSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>('all')
 
   const search = useDebounce(rawSearch, 300)
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isFetching } =
     useInfiniteQuery({
       // Filters in the key — changing them resets the page list automatically
-      queryKey: [['features', 'listFeaturesPaginated'], { status: statusFilter, search }] as const,
+      queryKey: [['features', 'listFeaturesPaginated'], { status: statusFilter, search, source: sourceFilter }] as const,
       queryFn: ({ pageParam }) =>
         trpcClient.features.listFeaturesPaginated.query({
           limit: PAGE_LIMIT,
@@ -49,6 +58,17 @@ export function FeatureList() {
         }),
       getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
       initialPageParam: 0,
+      select: (data) => ({
+        ...data,
+        pages: data.pages.map((page) => ({
+          ...page,
+          features: page.features.filter((f) => {
+            if (sourceFilter === 'github') return !!f.githubSourceId
+            if (sourceFilter === 'db') return !f.githubSourceId
+            return true
+          }),
+        })),
+      }),
     })
 
   const allFeatures = data?.pages.flatMap((p) => p.features) ?? []
@@ -135,7 +155,7 @@ export function FeatureList() {
       </div>
 
       {/* Status pills */}
-      <div className="mb-4 flex flex-wrap gap-1" role="group" aria-label="Filter by status">
+      <div className="mb-2 flex flex-wrap gap-1" role="group" aria-label="Filter by status">
         {STATUS_PILLS.map(({ key, label }) => (
           <button
             key={key}
@@ -148,6 +168,26 @@ export function FeatureList() {
             }`}
             aria-pressed={statusFilter === key}
           >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* Source pills */}
+      <div className="mb-4 flex flex-wrap gap-1" role="group" aria-label="Filter by source">
+        {SOURCE_PILLS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => { setSourceFilter(key) }}
+            className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+              sourceFilter === key
+                ? 'bg-secondary text-secondary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+            aria-pressed={sourceFilter === key}
+          >
+            {key === 'github' && <Github className="h-3 w-3" />}
             {label}
           </button>
         ))}

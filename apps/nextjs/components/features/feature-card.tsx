@@ -1,6 +1,7 @@
 import { memo } from 'react'
 
 import Link from 'next/link'
+import { Github } from 'lucide-react'
 
 import { LIFECYCLE_STAGES } from '@life-as-code/validators'
 
@@ -20,6 +21,8 @@ interface FeatureCardProps {
     score: number | null
     content: unknown
     updatedAt: Date
+    githubSourceId?: string | null
+    githubPath?: string | null
   }
 }
 
@@ -41,9 +44,19 @@ export const FeatureCard = memo(function FeatureCard({ feature }: FeatureCardPro
     >
       {/* Links to the detail view — the Edit tab lives there now */}
       <Link href={`/features/${feature.id}`} className="block">
-        {/* Header row: key + score badge + status badge */}
+        {/* Header row: key + source badge + score badge + status badge */}
         <div className="flex items-center justify-between">
-          <span className="font-mono text-xs text-muted-foreground">{feature.featureKey}</span>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs text-muted-foreground">{feature.featureKey}</span>
+            {feature.githubSourceId && (
+              <span
+                title={feature.githubPath ?? 'Synced from GitHub'}
+                className="flex items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-xs text-muted-foreground"
+              >
+                <Github className="h-3 w-3" />
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <ScoreBadge score={feature.score ?? null} />
             <FeatureStateBadge status={feature.status} frozen={feature.frozen} />
