@@ -4,7 +4,7 @@ import type { Route } from 'next'
 
 import { useRouter, usePathname } from 'next/navigation'
 
-import { BookOpen, CalendarRange, GitBranch, LayoutDashboard, List, PanelLeftClose, PanelLeftOpen, Settings, Trees } from 'lucide-react'
+import { BookOpen, CalendarRange, GitBranch, Info, LayoutDashboard, List, Network, PanelLeftClose, PanelLeftOpen, Settings, Trees } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 
@@ -20,10 +20,12 @@ const navLinks: { icon: LucideIcon; label: string; href: Route; ariaLabel: strin
   { icon: LayoutDashboard, label: 'Dashboard', href: '/',        ariaLabel: 'Dashboard',      exact: true },
   { icon: List,            label: 'Features',  href: '/features', ariaLabel: 'Feature list' },
   { icon: Trees,           label: 'Tree',       href: '/tree',     ariaLabel: 'Feature Tree' },
+  { icon: Network,         label: 'Graph',      href: '/graph',    ariaLabel: 'Feature Graph' },
   { icon: CalendarRange,   label: 'Timeline',   href: '/timeline', ariaLabel: 'Timeline view' },
   { icon: BookOpen,        label: 'Docs',          href: '/docs',          ariaLabel: 'Documentation' },
   { icon: GitBranch,       label: 'Integrations',  href: '/integrations',  ariaLabel: 'Integrations' },
   { icon: Settings,        label: 'Admin',          href: '/admin',         ariaLabel: 'Admin' },
+  { icon: Info,            label: 'About',          href: '/about',         ariaLabel: 'About' },
 ]
 
 export function Sidebar() {

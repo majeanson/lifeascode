@@ -45,4 +45,7 @@ export const FeatureSchema = z.object({
   tags: z.array(z.string()).optional(),
   annotations: z.array(AnnotationSchema).optional(),
   lineage: LineageSchema.optional(),
+  successCriteria: z.string().optional(),
+  domain: z.string().optional(),
+  priority: z.number().int().min(1).max(5).optional(), // 1 = highest, 5 = lowest; controls sibling ordering
 })

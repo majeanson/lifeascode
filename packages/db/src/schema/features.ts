@@ -16,6 +16,7 @@ export const features = pgTable(
     parentId: text('parent_id'),
     content: jsonb('content').notNull().default({}),
     score: smallint('score'),
+    priority: smallint('priority'),
     targetPeriod: text('target_period'),
     /** Pre-computed completeness 0-100 based on filled lifecycle stages. Updated on every content write. */
     completeness_pct: integer('completeness_pct').notNull().default(0),
@@ -30,6 +31,7 @@ export const features = pgTable(
     index('idx_features_org_id').on(table.orgId),
     index('idx_features_feature_key').on(table.featureKey),
     index('idx_features_parent_id').on(table.parentId),
+    index('idx_features_priority').on(table.priority),
   ],
 )
 

@@ -1,5 +1,5 @@
-import { featureEvents, features, and, desc, eq, ilike, isNotNull, isNull, like, ne, or, schemaConfigs, sql } from '@life-as-code/db'
-import { AddAnnotationSchema, AddDecisionSchema, CreateFeatureSchema, DEFAULT_SCHEMA_CONFIG, EventType, FeatureContentSchema, FlagAnnotationSchema, FreezeFeatureSchema, GetFeatureByKeySchema, GetFeatureJsonSchema, GetFeatureSchema, GetLineageSchema, ListAnnotationsSchema, ListFeaturesPagedSchema, SchemaConfigContentSchema, SetScoreSchema, SetTargetPeriodSchema, SpawnFeatureSchema, UpdateFeatureJsonSchema, UpdateStageSchema, UpdateTagsSchema, UpdateTitleSchema, computeCompletenessFromContent } from '@life-as-code/validators'
+import { featureEvents, features, and, asc, desc, eq, ilike, isNotNull, isNull, like, ne, or, schemaConfigs, sql } from '@life-as-code/db'
+import { AddAnnotationSchema, AddDecisionSchema, CreateFeatureSchema, DEFAULT_SCHEMA_CONFIG, EventType, FeatureContentSchema, FlagAnnotationSchema, FreezeFeatureSchema, GetFeatureByKeySchema, GetFeatureJsonSchema, GetFeatureSchema, GetLineageSchema, ListAnnotationsSchema, ListFeaturesPagedSchema, SchemaConfigContentSchema, SetPrioritySchema, SetScoreSchema, SetTargetPeriodSchema, SpawnFeatureSchema, UpdateFeatureJsonSchema, UpdateStageSchema, UpdateTagsSchema, UpdateTitleSchema, computeCompletenessFromContent } from '@life-as-code/validators'
 import type { AnnotationEntry, DecisionEntry } from '@life-as-code/validators'
 import { TRPCError } from '@trpc/server'
 import { z } from 'zod'
@@ -504,6 +504,7 @@ export const featuresRouter = createTRPCRouter({
         featureKey:      features.featureKey,
         status:          features.status,
         frozen:          features.frozen,
+        priority:        features.priority,
         updatedAt:       features.updatedAt,
         completeness_pct: features.completeness_pct,
         title:           sql<string>`coalesce(${features.content}->>'title', '')`,
@@ -512,7 +513,7 @@ export const featuresRouter = createTRPCRouter({
       })
       .from(features)
       .where(and(eq(features.orgId, DEFAULT_ORG_ID), isNull(features.parentId)))
-      .orderBy(desc(features.updatedAt))
+      .orderBy(asc(features.priority), desc(features.updatedAt))
       .limit(1000)
   ),
 
@@ -527,6 +528,7 @@ export const featuresRouter = createTRPCRouter({
           status:          features.status,
           frozen:          features.frozen,
           parentId:        features.parentId,
+          priority:        features.priority,
           updatedAt:       features.updatedAt,
           completeness_pct: features.completeness_pct,
           title:           sql<string>`coalesce(${features.content}->>'title', '')`,
@@ -535,7 +537,7 @@ export const featuresRouter = createTRPCRouter({
         })
         .from(features)
         .where(eq(features.parentId, input.parentId))
-        .orderBy(desc(features.updatedAt))
+        .orderBy(asc(features.priority), desc(features.updatedAt))
         .limit(500)
     ),
 
@@ -686,6 +688,36 @@ export const featuresRouter = createTRPCRouter({
       })
     }),
 
+  setPriority: publicProcedure
+    .input(SetPrioritySchema)
+    .mutation(({ ctx, input }) => {
+      return ctx.db.transaction(async (tx) => {
+        const existing = await tx.query.features.findFirst({
+          where: eq(features.id, input.featureId),
+        })
+        if (!existing) throw new TRPCError({ code: 'NOT_FOUND', message: 'Feature not found' })
+        if (existing.frozen) throw new TRPCError({ code: 'FORBIDDEN', message: 'Cannot set priority on a frozen feature' })
+
+        const [updated] = await tx
+          .update(features)
+          .set({ priority: input.priority, updatedAt: new Date() })
+          .where(eq(features.id, input.featureId))
+          .returning()
+
+        if (!updated) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' })
+
+        await tx.insert(featureEvents).values({
+          featureId: input.featureId,
+          orgId: DEFAULT_ORG_ID,
+          eventType: EventType.FEATURE_UPDATED,
+          changedFields: { priority: { from: existing.priority, to: input.priority } },
+          actor: 'anonymous',
+        })
+
+        return updated
+      })
+    }),
+
   setScore: publicProcedure
     .input(SetScoreSchema)
     .mutation(({ ctx, input }) => {
@@ -798,4 +830,21 @@ export const featuresRouter = createTRPCRouter({
         return updated
       })
     }),
+
+  /** Graph view: all features with slim projection for force-directed graph */
+  listAllForGraph: publicProcedure.query(({ ctx }) =>
+    ctx.db
+      .select({
+        id:              features.id,
+        featureKey:      features.featureKey,
+        parentId:        features.parentId,
+        status:          features.status,
+        frozen:          features.frozen,
+        completeness_pct: features.completeness_pct,
+        title:           sql<string>`coalesce(nullif(${features.content}->>'title', ''), nullif(${features.content}->'problem'->>'problemStatement', ''), ${features.featureKey})`,
+      })
+      .from(features)
+      .where(eq(features.orgId, DEFAULT_ORG_ID))
+      .limit(2000)
+  ),
 })

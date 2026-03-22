@@ -4,7 +4,7 @@
   "status": "active",
   "problem": "Teams need a shared web interface to browse, search, and edit feature provenance records — with role-appropriate views for engineers, product managers, support staff, and end users — that stays in sync with the local filesystem.",
   "analysis": "Next.js 15 app with tRPC v11 and Drizzle ORM on Postgres. The LAC_LOCAL_DIR watcher syncs feature.json files to the DB within 300ms of any change. Four RBAC dashboard views (Dev/PM/Support/User) show different columns for different audiences. The wizard guides step-by-step feature completion. As of iteration 3: lineage tab, annotation icons, empty-state component, relative-time display, accessibility improvements (aria-labels), copy button with checkmark feedback.",
-  "implementation": "Routes: /features (list with debounced search, status filter pills, group-by-status), /features/[id] (detail with 6 tabs: overview/guide/lineage/decisions/annotations/history), /features/[id]/wizard, /features/[id]/json (raw editor), /dashboard (completeness table with RBAC views, SVG histogram). tRPC procedures: listFeatures, getFeature, updateFeature, addAnnotation, exportFeatureJson, getLineage, getFeatureByKey. File watcher: chokidar on LAC_LOCAL_DIR, upserts to DB on change. Global keyboard shortcuts: /, n, g d, g l. EmptyState component for empty lists.",
+  "implementation": "Routes: /features (list with debounced search, status filter pills, group-by-status), /features/[id] (detail with 6 tabs: overview/guide/lineage/decisions/annotations/history), /features/[id]/wizard, /features/[id]/json (raw editor), /graph (Obsidian-style force-directed graph of all features — nodes colored by status, edges as parent/child links, d3 force simulation, zoom/pan, hover tooltip, click to navigate), /dashboard (completeness table with RBAC views). tRPC procedures: listFeatures, getFeature, updateFeature, addAnnotation, exportFeatureJson, getLineage, getFeatureByKey, listAllForGraph. File watcher: chokidar on LAC_LOCAL_DIR, upserts to DB on change. Global keyboard shortcuts: /, n, g d, g l. EmptyState component for empty lists.",
   "decisions": [
     {
       "decision": "tRPC over REST for the webapp API layer",
@@ -19,16 +19,24 @@
     {
       "decision": "Tabs as URL hash fragments rather than separate routes",
       "rationale": "Preserves scroll position and bookmarkability. No server round-trip needed to switch tabs.",
-      "alternativesConsidered": ["Separate routes per tab — requires server round-trip, loses scroll position"],
+      "alternativesConsidered": [
+        "Separate routes per tab — requires server round-trip, loses scroll position"
+      ],
       "date": "2026-03-15"
     }
   ],
   "knownLimitations": [
     "No multi-tenant auth yet — single org, local-only",
-    "Lineage graph is text only — no visual tree",
     "Audit log exists in DB but not rendered in UI yet",
     "Next.js API bundle may have issues in some build environments (pre-existing)"
   ],
-  "tags": ["nextjs", "trpc", "dashboard", "postgres", "drizzle", "react-query"],
+  "tags": [
+    "nextjs",
+    "trpc",
+    "dashboard",
+    "postgres",
+    "drizzle",
+    "react-query"
+  ],
   "schemaVersion": 1
 }

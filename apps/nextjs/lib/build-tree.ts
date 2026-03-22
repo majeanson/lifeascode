@@ -4,12 +4,15 @@ export interface TreeFeatureNode extends Feature {
   children: TreeFeatureNode[]
 }
 
-function sortDesc(a: TreeFeatureNode, b: TreeFeatureNode) {
+function sortByPriorityThenDate(a: TreeFeatureNode, b: TreeFeatureNode) {
+  const pa = a.priority ?? 9999
+  const pb = b.priority ?? 9999
+  if (pa !== pb) return pa - pb
   return b.updatedAt.getTime() - a.updatedAt.getTime()
 }
 
 function sortTree(nodes: TreeFeatureNode[]): TreeFeatureNode[] {
-  const sorted = nodes.toSorted(sortDesc)
+  const sorted = nodes.toSorted(sortByPriorityThenDate)
   for (const node of sorted) {
     node.children = sortTree(node.children)
   }

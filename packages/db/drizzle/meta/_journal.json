@@ -43,6 +43,13 @@
       "when": 1774108403066,
       "tag": "0005_slim_luke_cage",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1774138591201,
+      "tag": "0006_small_meltdown",
+      "breakpoints": true
     }
   ]
 }
