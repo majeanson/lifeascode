@@ -2,6 +2,15 @@ import { z } from 'zod'
 
 import { LIFECYCLE_STAGES } from './lifecycle'
 
+// Mirrors StatusTransitionSchema in @life-as-code/feature-schema (lac-cli side).
+// Kept as a local type — the two ecosystems are schema-independent.
+export const StatusHistoryEntrySchema = z.object({
+  from: z.string(),
+  to: z.string(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  reason: z.string().optional(),
+})
+
 export const FeatureContentSchema = z
   .object({
     title: z.string().max(200).optional(),
@@ -25,6 +34,27 @@ export const FeatureContentSchema = z
       .object({ spawnReason: z.string().optional() })
       .passthrough()
       .optional(),
+    // Written by lac-mcp advance_feature on every status transition.
+    // Parallel to the feature_events audit log — this version travels with the feature.json.
+    statusHistory: z.array(StatusHistoryEntrySchema).optional(),
+    // Lifecycle pointers (added 2026-03-21 in lac-cli; sync kept explicit for ingestion)
+    revisions: z.array(z.object({
+      date: z.string(),
+      author: z.string(),
+      fields_changed: z.array(z.string()),
+      reason: z.string(),
+    })).optional(),
+    superseded_by: z.string().optional(),
+    superseded_from: z.array(z.string()).optional(),
+    merged_into: z.string().optional(),
+    merged_from: z.array(z.string()).optional(),
+    // Reconstruction-critical fields (added 2026-03-22 in lac-cli)
+    componentFile: z.string().optional(),
+    npmPackages: z.array(z.string()).optional(),
+    publicInterface: z.array(z.object({ name: z.string(), type: z.string(), description: z.string().optional() })).optional(),
+    externalDependencies: z.array(z.string()).optional(),
+    lastVerifiedDate: z.string().optional(),
+    codeSnippets: z.array(z.object({ label: z.string(), snippet: z.string() })).optional(),
   })
   .passthrough()
 
@@ -105,6 +135,7 @@ export type SpawnFeatureInput = z.infer<typeof SpawnFeatureSchema>
 export type GetLineageInput = z.infer<typeof GetLineageSchema>
 export type GetFeatureJsonInput = z.infer<typeof GetFeatureJsonSchema>
 export type UpdateFeatureJsonInput = z.infer<typeof UpdateFeatureJsonSchema>
+export type StatusHistoryEntry = z.infer<typeof StatusHistoryEntrySchema>
 export type FeatureContent = z.infer<typeof FeatureContentSchema>
 
 export const ListFeaturesPagedSchema = z.object({
