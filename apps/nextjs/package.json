@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "bun run with-env next build",
+    "build:lac": "lac export --all ../../ --out ./public/lac || echo 'skipping lac (not installed)'",
+    "build": "bun run build:lac && bun run with-env next build",
     "clean": "git clean -xdf .cache .next .turbo node_modules",
     "dev": "bun run with-env next dev --turbopack",
     "start": "bun run with-env next start",
@@ -37,6 +38,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@majeanson/lac": "^3.4.0",
     "@life-as-code/tsconfig": "workspace:*",
     "@playwright/test": "^1.50.0",
     "@tailwindcss/postcss": "catalog:tailwind",
